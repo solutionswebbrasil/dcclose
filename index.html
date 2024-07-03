@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluxograma Detalhado de Atendimento ao Cliente</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .header {
+            background-color: #333;
+            padding: 20px;
+            text-align: center;
+            color: #fff;
+        }
+        .header img {
+            height: 50px;
+            margin-right: 20px;
+            vertical-align: middle;
+        }
+        .button-container {
+            display: inline-block;
+        }
+        .button-container button {
+            background-color: #555;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        .button-container button:hover {
+            background-color: #777;
+        }
+        .flowchart-container {
+            padding: 20px;
+        }
+        .flowchart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .step {
+            background-color: #fff;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
+            width: 350px;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .substep {
+            background-color: #e0f7fa;
+            border: 2px solid #00838f;
+            border-radius: 10px;
+            padding: 8px;
+            margin: 5px 0 5px 20px;
+            width: 320px;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .step:hover, .substep:hover {
+            background-color: #333;
+            color: #fff;
+        }
+        .substeps {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .arrow {
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid #333;
+            margin: 5px 0;
+        }
+        .customer-experience {
+            background-color: #ffff99;
+            border-color: #ffcc00;
+        }
+        .decision {
+            background-color: #ffd700;
+            border-color: #ffa500;
+        }
+        .tooltip {
+            visibility: hidden;
+            width: 300px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -150px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .step:hover .tooltip, .substep:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        .hidden {
+            display: none;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .icon-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+        }
+        .icon-container span {
+            cursor: pointer;
+        }
+        .icon-container span:hover {
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="/mnt/data/digital-jundiai-logo.png" alt="Logo Digital Jundiaí">
+        <div class="button-container">
+            <button onclick="addStep()">Adicionar Tópico Principal</button>
+            <button onclick="window.print()">Imprimir</button>
+            <button onclick="listProjects()">Abrir Projeto Salvo</button>
+            <button onclick="exportToJSON()">Exportar</button>
+            <button onclick="saveToDatabase()">Salvar</button>
+            <button onclick="clearAll()">Limpar Tudo</button>
+        </div>
+    </div>
+    <div class="flowchart-container">
+        <div class="flowchart" id="flowchart">
+            <!-- Existing steps here -->
+        </div>
+    </div>
+    <input type="file" id="fileInput" onchange="handleFileSelect(event)" class="hidden">
+    <div id="projectList" class="hidden">
+        <h2>Projetos Salvos</h2>
+        <ul id="projectListUl"></ul>
+    </div>
+    <script>
+        let stepCounter = 1;
+
+        function toggleSubsteps(id) {
+            var substeps = document.getElementById(id);
+            if (substeps.style.display === "none" || substeps.style.display === "") {
+                substeps.style.display = "flex";
+            } else {
+                substeps.style.display = "none";
+            }
+        }
+
+        function addStep() {
+            var stepName = prompt("Digite o nome do novo tópico principal:");
+            if (stepName) {
+                var stepId = 'step-' + stepCounter;
+                var newStep = document.createElement('div');
+                newStep.className = 'step';
+                newStep.id = stepId;
+                newStep.innerHTML = `${stepCounter}. ${stepName} <div class="icon-container"><span class="edit-icon" onclick="editStep('${stepId}')">&#9998;</span> <span class="add-substep-icon" onclick="addSubstepPrompt('${stepId}')">+</span> <span class="delete-icon" onclick="deleteStep('${stepId}')">&#128465;</span></div>`;
+                newStep.setAttribute('onclick', `toggleSubsteps('${stepId}-substeps')`);
+                document.getElementById('flowchart').appendChild(newStep);
+
+                var newSubsteps = document.createElement('div');
+                newSubsteps.className = 'substeps';
+                newSubsteps.id = stepId + '-substeps';
+                document.getElementById('flowchart').appendChild(newSubsteps);
+
+                var newArrow = document.createElement('div');
+                newArrow.className = 'arrow';
+                document.getElementById('flowchart').appendChild(newArrow);
+
+                stepCounter++;
+                updateStepNumbers();
+            }
+        }
+
+        function addSubstepPrompt(stepId) {
+            var substepName = prompt("Digite o nome do novo subtópico:");
+            if (substepName) {
+                addSubstep(stepId, substepName);
+            }
+        }
+
+        function addSubstep(stepId, substepName) {
+            var step = document.getElementById(stepId);
+            var stepNumber = step.id.split('-')[1];
+            var substepsContainer = document.getElementById(stepId + '-substeps');
+            var substepCounter = substepsContainer.children.length + 1;
+
+            var newSubstep = document.createElement('div');
+            newSubstep.className = 'substep';
+            newSubstep.id = 'substep-' + stepNumber + '.' + substepCounter;
+            newSubstep.innerHTML = `${stepNumber}.${substepCounter}. ${substepName} <div class="icon-container"><span class="edit-icon" onclick="editStep('${newSubstep.id}')">&#9998;</span> <span class="delete-icon" onclick="deleteStep('${newSubstep.id}')">&#128465;</span></div>`;
+            substepsContainer.appendChild(newSubstep);
+        }
+
+        function editStep(id) {
+            var step = document.getElementById(id);
+            var stepNumber = step.id.split('-')[1] || step.id.split('substep-')[1];
+            var newDescription = prompt("Digite a nova descrição:", step.innerText.split('✎')[0].trim());
+            if (newDescription) {
+                step.innerHTML = `${stepNumber}. ${newDescription} <div class="icon-container"><span class="edit-icon" onclick="editStep('${id}')">&#9998;</span> ${step.classList.contains('step') ? `<span class="add-substep-icon" onclick="addSubstepPrompt('${id}')">+</span>` : ''} <span class="delete-icon" onclick="deleteStep('${id}')">&#128465;</span></div>`;
+                updateStepNumbers();
+            }
+        }
+
+        function deleteStep(id) {
+            var step = document.getElementById(id);
+            var substeps = document.getElementById(id + '-substeps');
+            var arrow = step.nextElementSibling;
+
+            if (substeps) {
+                substeps.parentNode.removeChild(substeps);
+            }
+            if (arrow && arrow.classList.contains('arrow')) {
+                arrow.parentNode.removeChild(arrow);
+            }
+
+            step.parentNode.removeChild(step);
+            updateStepNumbers();
+        }
+
+        function exportToJSON() {
+            var flowchart = document.getElementById('flowchart');
+            var steps = flowchart.querySelectorAll('.step, .substep');
+            var data = [];
+            steps.forEach(step => {
+                var stepData = {
+                    id: step.id,
+                    text: step.innerText.split('✎')[0].split('+')[0].split('🗑')[0].trim(),
+                    type: step.className
+                };
+                data.push(stepData);
+            });
+            var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'fluxograma.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importFromJSON() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileSelect(event) {
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var content = e.target.result;
+                    var data = JSON.parse(content);
+                    data.forEach(stepData => {
+                        if (stepData.type.includes('step')) {
+                            var newStep = document.createElement('div');
+                            newStep.className = stepData.type;
+                            newStep.id = stepData.id;
+                            newStep.innerHTML = `${stepData.text} <div class="icon-container"><span class="edit-icon" onclick="editStep('${stepData.id}')">&#9998;</span> <span class="add-substep-icon" onclick="addSubstepPrompt('${stepData.id}')">+</span> <span class="delete-icon" onclick="deleteStep('${stepData.id}')">&#128465;</span></div>`;
+                            newStep.setAttribute('onclick', `toggleSubsteps('${stepData.id}-substeps')`);
+                            document.getElementById('flowchart').appendChild(newStep);
+
+                            var newSubsteps = document.createElement('div');
+                            newSubsteps.className = 'substeps';
+                            newSubsteps.id = stepData.id + '-substeps';
+                            document.getElementById('flowchart').appendChild(newSubsteps);
+
+                        } else if (stepData.type.includes('substep')) {
+                            var newSubstep = document.createElement('div');
+                            newSubstep.className = stepData.type;
+                            newSubstep.id = stepData.id;
+                            newSubstep.innerHTML = `${stepData.text} <div class="icon-container"><span class="edit-icon" onclick="editStep('${stepData.id}')">&#9998;</span> <span class="delete-icon" onclick="deleteStep('${stepData.id}')">&#128465;</span></div>`;
+                            document.getElementById(stepData.id.split('-substeps')[0] + '-substeps').appendChild(newSubstep);
+                        }
+                    });
+                    updateStepNumbers();
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function updateStepNumbers() {
+            const steps = document.querySelectorAll('.step');
+            steps.forEach((step, index) => {
+                const stepNumber = index + 1;
+                const substeps = step.nextElementSibling.querySelectorAll('.substep');
+                step.id = `step-${stepNumber}`;
+                step.querySelector('.icon-container').nextSibling.nodeValue = `${stepNumber}. `;
+                substeps.forEach((substep, subIndex) => {
+                    substep.id = `substep-${stepNumber}.${subIndex + 1}`;
+                    substep.querySelector('.icon-container').nextSibling.nodeValue = `${stepNumber}.${subIndex + 1}. `;
+                });
+            });
+            stepCounter = steps.length + 1;
+        }
+
+        function clearAll() {
+            document.getElementById('flowchart').innerHTML = '';
+            stepCounter = 1;
+        }
+
+        async function saveToDatabase() {
+            const flowchart = document.getElementById('flowchart');
+            const steps = flowchart.querySelectorAll('.step, .substep');
+            const data = [];
+            steps.forEach(step => {
+                const stepData = {
+                    id: step.id,
+                    text: step.innerText.split('✎')[0].split('+')[0].split('🗑')[0].trim(),
+                    type: step.className
+                };
+                data.push(stepData);
+            });
+
+            const response = await fetch('/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                alert('Projeto salvo com sucesso!');
+            } else {
+                alert('Erro ao salvar projeto.');
+            }
+        }
+
+        async function listProjects() {
+            const response = await fetch('/projects');
+            const projects = await response.json();
+
+            const projectListUl = document.getElementById('projectListUl');
+            projectListUl.innerHTML = '';
+            projects.forEach(project => {
+                const li = document.createElement('li');
+                li.textContent = `Projeto ${project.id} - ${project.timestamp}`;
+                li.onclick = () => loadProject(project.id);
+                projectListUl.appendChild(li);
+            });
+
+            document.getElementById('projectList').classList.remove('hidden');
+        }
+
+        async function loadProject(id) {
+            const response = await fetch(`/project/${id}`);
+            const data = await response.json();
+
+            clearAll();
+            data.forEach(stepData => {
+                if (stepData.type.includes('step')) {
+                    const newStep = document.createElement('div');
+                    newStep.className = stepData.type;
+                    newStep.id = stepData.id;
+                    newStep.innerHTML = `${stepData.text} <div class="icon-container"><span class="edit-icon" onclick="editStep('${stepData.id}')">&#9998;</span> <span class="add-substep-icon" onclick="addSubstepPrompt('${stepData.id}')">+</span> <span class="delete-icon" onclick="deleteStep('${stepData.id}')">&#128465;</span></div>`;
+                    newStep.setAttribute('onclick', `toggleSubsteps('${stepData.id}-substeps')`);
+                    document.getElementById('flowchart').appendChild(newStep);
+
+                    const newSubsteps = document.createElement('div');
+                    newSubsteps.className = 'substeps';
+                    newSubsteps.id = stepData.id + '-substeps';
+                    document.getElementById('flowchart').appendChild(newSubsteps);
+
+                } else if (stepData.type.includes('substep')) {
+                    const newSubstep = document.createElement('div');
+                    newSubstep.className = stepData.type;
+                    newSubstep.id = stepData.id;
+                    newSubstep.innerHTML = `${stepData.text} <div class="icon-container"><span class="edit-icon" onclick="editStep('${stepData.id}')">&#9998;</span> <span class="delete-icon" onclick="deleteStep('${stepData.id}')">&#128465;</span></div>`;
+                    document.getElementById(stepData.id.split('-substeps')[0] + '-substeps').appendChild(newSubstep);
+                }
+            });
+            updateStepNumbers();
+        }
+    </script>
+</body>
+</html>
